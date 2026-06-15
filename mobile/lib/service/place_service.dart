@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/place_model.dart';
 import 'api_config.dart';
+import '../models/place_model.dart';
 
 class PlaceService {
 
@@ -17,15 +17,13 @@ class PlaceService {
 
       final data = jsonDecode(response.body);
 
-      List placesJson = data['data'];
+      final List places = data['data'];
 
-      return placesJson
-          .map((json) => Place.fromJson(json))
+      return places
+          .map((e) => Place.fromJson(e))
           .toList();
-
-    } else {
-
-      throw Exception("Failed to load places");
     }
+
+    throw Exception("Failed load places");
   }
 }

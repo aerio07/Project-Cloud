@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'detail_page.dart';
 import '../models/place_model.dart';
 import '../service/place_service.dart';
 
@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Campus Directory"),
+        title: const Text("SPBU Surabaya"),
       ),
 
       body: FutureBuilder<List<Place>>(
@@ -34,6 +34,9 @@ class _HomePageState extends State<HomePage> {
 
         builder: (context, snapshot) {
 
+          print(snapshot.connectionState);
+
+          // Loading
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
 
@@ -42,15 +45,29 @@ class _HomePageState extends State<HomePage> {
             );
           }
 
+          // Error
           if (snapshot.hasError) {
 
+            print(snapshot.error);
+
             return Center(
-              child: Text(snapshot.error.toString()),
+              child: Text(
+                "ERROR : ${snapshot.error}",
+              ),
+            );
+          }
+
+          // Kosong
+          if (!snapshot.hasData ||
+              snapshot.data!.isEmpty) {
+
+            return const Center(
+              child: Text("Data kosong"),
             );
           }
 
           final places = snapshot.data!;
-
+            print(places.length);
           return ListView.builder(
             itemCount: places.length,
 
@@ -58,12 +75,36 @@ class _HomePageState extends State<HomePage> {
 
               final place = places[index];
 
-              return Card(
-                child: ListTile(
-                  title: Text(place.name),
-                  subtitle: Text(place.address),
-                ),
-              );
+             return Card(
+  margin: const EdgeInsets.all(10),
+
+  child: ListTile(
+
+    leading: const Icon(
+      Icons.local_gas_station,
+    ),
+
+    title: Text(place.name),
+
+    subtitle: Text(place.address),
+
+    trailing: const Icon(
+      Icons.arrow_forward_ios,
+    ),
+
+    onTap: () {
+
+      Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => DetailPage(
+        place: place,
+      ),
+    ),
+  );
+    },
+  ),
+);
             },
           );
         },

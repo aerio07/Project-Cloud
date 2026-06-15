@@ -1,9 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\ReviewController;
+
+// ==============================
+// BASIC API
+// ==============================
 
 Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -13,3 +20,9 @@ Route::get('/places/{id}', [PlaceController::class, 'show']);
 
 Route::get('/reviews', [ReviewController::class, 'index']);
 
+
+// ==============================
+// OPENROUTESERVICE DIRECTIONS
+// ==============================
+
+Route::get('/directions', function (Request $request) { $start = $request->start; $end = $request->end; $profile = $request->profile ?? 'driving-car'; try { $response = Http::withHeaders([ 'Authorization' => env('ORS_API_KEY'), 'Accept' => 'application/json', ])->post( 'https://api.openrouteservice.org/v2/directions/' . $profile, [ 'coordinates' => [ array_map('floatval', explode(',', $start)), array_map('floatval', explode(',', $end)), ] ] ); return response()->json( $response->json() ); } catch (\Exception $e) { return response()->json([ 'error' => true, 'message' => $e->getMessage() ], 500); } });
