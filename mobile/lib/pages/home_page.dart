@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'detail_page.dart';
+import 'package:geolocator/geolocator.dart';
+
 import '../models/place_model.dart';
 import '../service/place_service.dart';
+import 'detail_page.dart';
+import 'fuel_prices_page.dart';
+import 'profile_page.dart';
+import 'wishlist_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,104 +16,284 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  late Future<List<Place>> futurePlaces;
+  late Future<List<Place>> _futurePlaces;
+  String _query = '';
+  Position? _userPosition;
+  String _selectedFilter = 'Terdekat';
 
   @override
   void initState() {
     super.initState();
+    _futurePlaces = PlaceService.getPlaces();
+    _loadUserLocation();
+  }
 
-    futurePlaces = PlaceService.getPlaces();
+  void _reload() => setState(() => _futurePlaces = PlaceService.getPlaces());
+
+  Future<void> _loadUserLocation() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) return;
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+      if (mounted) setState(() => _userPosition = position);
+    } catch (_) {
+      // Daftar SPBU tetap dapat dipakai walau lokasi perangkat tidak tersedia.
+    }
+  }
+
+  double? _distanceKm(Place place) {
+    final position = _userPosition;
+    if (position == null) return null;
+    return Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          place.latitude,
+          place.longitude,
+        ) /
+        1000;
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("SPBU Surabaya"),
-      ),
+      backgroundColor: const Color(0xFFF8F9FC),
+      body: SafeArea(
+        child: FutureBuilder<List<Place>>(
+          future: _futurePlaces,
+          builder: (context, snapshot) {
+            final places = snapshot.data ?? <Place>[];
+            final filteredPlaces = places.where((place) {
+              final keyword = _query.toLowerCase();
+              return place.name.toLowerCase().contains(keyword) ||
+                  place.address.toLowerCase().contains(keyword);
+            }).toList();
+            if (_selectedFilter == 'Terdekat' && _userPosition != null) {
+              filteredPlaces.sort((a, b) => _distanceKm(a)!.compareTo(_distanceKm(b)!));
+            } else if (_selectedFilter == 'A–Z') {
+              filteredPlaces.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+            }
 
-      body: FutureBuilder<List<Place>>(
-        future: futurePlaces,
-
-        builder: (context, snapshot) {
-
-          print(snapshot.connectionState);
-
-          // Loading
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          // Error
-          if (snapshot.hasError) {
-
-            print(snapshot.error);
-
-            return Center(
-              child: Text(
-                "ERROR : ${snapshot.error}",
+            return RefreshIndicator(
+              onRefresh: () async => _reload(),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _header(context)),
+                  SliverToBoxAdapter(child: _priceInfoCard(context)),
+                  SliverToBoxAdapter(child: _searchField()),
+                  SliverToBoxAdapter(child: _filterChips()),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              _userPosition == null ? 'SPBU di Surabaya' : 'SPBU Terdekat',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF202124),
+                              ),
+                            ),
+                          ),
+                          if (snapshot.hasData)
+                            Text('${filteredPlaces.length} lokasi',
+                                style: const TextStyle(color: Color(0xFF6B7280))),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: CircularProgressIndicator(color: Color(0xFFBA0015))),
+                    )
+                  else if (snapshot.hasError)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _LoadError(onRetry: _reload),
+                    )
+                  else if (filteredPlaces.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: Text('SPBU tidak ditemukan.')),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                      sliver: SliverList.separated(
+                        itemCount: filteredPlaces.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) => _placeCard(filteredPlaces[index]),
+                      ),
+                    ),
+                ],
               ),
             );
-          }
-
-          // Kosong
-          if (!snapshot.hasData ||
-              snapshot.data!.isEmpty) {
-
-            return const Center(
-              child: Text("Data kosong"),
-            );
-          }
-
-          final places = snapshot.data!;
-            print(places.length);
-          return ListView.builder(
-            itemCount: places.length,
-
-            itemBuilder: (context, index) {
-
-              final place = places[index];
-
-             return Card(
-  margin: const EdgeInsets.all(10),
-
-  child: ListTile(
-
-    leading: const Icon(
-      Icons.local_gas_station,
-    ),
-
-    title: Text(place.name),
-
-    subtitle: Text(place.address),
-
-    trailing: const Icon(
-      Icons.arrow_forward_ios,
-    ),
-
-    onTap: () {
-
-      Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => DetailPage(
-        place: place,
-      ),
-    ),
-  );
-    },
-  ),
-);
-            },
-          );
-        },
+          },
+        ),
       ),
     );
   }
+
+  Widget _header(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 14, 8),
+        child: Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE9E7),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFBA0015)),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('MySPBU', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFFBA0015))),
+              Text('Temukan SPBU pilihanmu', style: TextStyle(color: Color(0xFF6B7280))),
+            ]),
+          ),
+          IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistPage())), tooltip: 'Wishlist', icon: const Icon(Icons.favorite_border_rounded)),
+          IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage())), tooltip: 'Profil', icon: const Icon(Icons.person_outline_rounded)),
+        ]),
+      );
+
+  Widget _priceInfoCard(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+        child: Material(
+          color: const Color(0xFFE21F26),
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FuelPricesPage())),
+            child: Stack(children: [
+              const Positioned(
+                right: -18,
+                bottom: -22,
+                child: Icon(Icons.local_gas_station_rounded, size: 150, color: Color(0x33FFFFFF)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(children: [
+                  const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('INFORMASI HARGA BBM', style: TextStyle(color: Color(0xFFFFDAD6), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    SizedBox(height: 7),
+                    Text('Cek harga BBM\nterkini', style: TextStyle(color: Colors.white, fontSize: 22, height: 1.15, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 10),
+                    Text('Lihat daftar harga dan jenis BBM', style: TextStyle(color: Color(0xFFFFEDEA))),
+                  ])),
+                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      );
+
+  Widget _searchField() => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+        child: TextField(
+          onChanged: (value) => setState(() => _query = value.trim()),
+          decoration: InputDecoration(
+            hintText: 'Cari SPBU terdekat...',
+            prefixIcon: const Icon(Icons.search_rounded),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE7BDB8))),
+          ),
+        ),
+      );
+
+  Widget _filterChips() => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['Terdekat', 'Semua', 'A–Z']
+                .map((filter) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        selected: _selectedFilter == filter,
+                        label: Text(filter),
+                        avatar: filter == 'Terdekat'
+                            ? const Icon(Icons.near_me_rounded, size: 17)
+                            : filter == 'Semua'
+                                ? const Icon(Icons.filter_list_rounded, size: 17)
+                                : null,
+                        onSelected: (_) => setState(() => _selectedFilter = filter),
+                        selectedColor: const Color(0xFFD6E3FF),
+                        checkmarkColor: const Color(0xFF185EB0),
+                        labelStyle: TextStyle(
+                          color: _selectedFilter == filter
+                              ? const Color(0xFF185EB0)
+                              : const Color(0xFF5F6368),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        side: BorderSide(
+                          color: _selectedFilter == filter
+                              ? const Color(0xFF185EB0)
+                              : const Color(0xFFE2E2E5),
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
+      );
+
+  Widget _placeCard(Place place) => Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPage(place: place))),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(color: const Color(0xFFFFE9E7), borderRadius: BorderRadius.circular(13)),
+                child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFBA0015)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(place.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF202124)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 5),
+                Text(place.address, style: const TextStyle(color: Color(0xFF6B7280), height: 1.35), maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 10),
+                Row(children: [
+                  const Icon(Icons.near_me_rounded, size: 17, color: Color(0xFFBA0015)),
+                  const SizedBox(width: 5),
+                  Text(
+                    _distanceKm(place) == null
+                        ? 'Mengambil lokasi perangkat...'
+                        : '${_distanceKm(place)!.toStringAsFixed(1)} km dari lokasi Anda',
+                    style: const TextStyle(color: Color(0xFFBA0015), fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ]),
+              ])),
+            ]),
+          ),
+        ),
+      );
+}
+
+class _LoadError extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _LoadError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.cloud_off_rounded, size: 44, color: Color(0xFF6B7280)), const SizedBox(height: 12), const Text('Daftar SPBU belum dapat dimuat.'), const SizedBox(height: 12), OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('Coba lagi'))]));
 }
