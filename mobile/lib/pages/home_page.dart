@@ -3,10 +3,12 @@ import 'package:geolocator/geolocator.dart';
 
 import '../models/place_model.dart';
 import '../service/place_service.dart';
+import '../service/auth_store.dart';
 import 'detail_page.dart';
 import 'fuel_prices_page.dart';
 import 'profile_page.dart';
 import 'wishlist_page.dart';
+import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,7 +30,9 @@ class _HomePageState extends State<HomePage> {
     _loadUserLocation();
   }
 
-  void _reload() => setState(() => _futurePlaces = PlaceService.getPlaces());
+  void _reload() => setState(() {
+        _futurePlaces = PlaceService.getPlaces();
+      });
 
   Future<void> _loadUserLocation() async {
     try {
@@ -94,10 +98,10 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
                       child: Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               _userPosition == null ? 'SPBU di Surabaya' : 'SPBU Terdekat',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF202124),
@@ -157,16 +161,86 @@ class _HomePageState extends State<HomePage> {
             child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFBA0015)),
           ),
           const SizedBox(width: 12),
-          const Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('MySPBU', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFFBA0015))),
-              Text('Temukan SPBU pilihanmu', style: TextStyle(color: Color(0xFF6B7280))),
-            ]),
+          Expanded(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: AuthStore.isLoggedIn,
+              builder: (context, loggedIn, _) {
+                final name = AuthStore.userName.value ?? '';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loggedIn ? 'Halo, $name' : 'MySPBU',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFFBA0015)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Text('Temukan SPBU pilihanmu', style: TextStyle(color: Color(0xFF6B7280))),
+                  ],
+                );
+              },
+            ),
           ),
-          IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistPage())), tooltip: 'Wishlist', icon: const Icon(Icons.favorite_border_rounded)),
-          IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage())), tooltip: 'Profil', icon: const Icon(Icons.person_outline_rounded)),
+          IconButton(
+            onPressed: () => _navigateToWishlist(context),
+            tooltip: 'Wishlist',
+            icon: const Icon(Icons.favorite_border_rounded),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              ).then((_) => setState(() {}));
+            },
+            tooltip: 'Profil',
+            icon: const Icon(Icons.person_outline_rounded),
+          ),
         ]),
       );
+
+  void _navigateToWishlist(BuildContext context) {
+    if (AuthStore.isLoggedIn.value) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const WishlistPage()),
+      ).then((_) => setState(() {}));
+    } else {
+      _showLoginPrompt(context, "Wishlist");
+    }
+  }
+
+  void _showLoginPrompt(BuildContext context, String featureName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Login Diperlukan'),
+        content: Text('Anda perlu masuk terlebih dahulu untuk mengakses fitur $featureName.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              ).then((success) {
+                if (success == true && mounted) {
+                  _reload();
+                }
+              });
+            },
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE21F26)),
+            child: const Text('Masuk'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _priceInfoCard(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),

@@ -13,7 +13,6 @@ class Facility extends Model
 
     public function places()
     {
-        return $this->belongsToMany(Place::class)
-            ->withTimestamps();
+        return $this->belongsToMany(Place::class, 'facility_place');
     }
 }

@@ -30,15 +30,14 @@ class Place extends Model
 
     public function fuels()
     {
-        return $this->belongsToMany(Fuel::class)
+        return $this->belongsToMany(Fuel::class, 'place_fuel')
             ->withPivot(['is_available', 'price'])
             ->withTimestamps();
     }
 
     public function facilities()
     {
-        return $this->belongsToMany(Facility::class)
-            ->withTimestamps();
+        return $this->belongsToMany(Facility::class, 'facility_place');
     }
 
     public function scopeWithFilters($query, $request)

@@ -22,7 +22,7 @@ class PlaceController extends Controller
 
     public function show($id)
     {
-        $place = Place::with(['category', 'reviews'])
+        $place = Place::with(['category', 'reviews', 'fuels', 'facilities'])
                     ->find($id);
 
         if (!$place) {

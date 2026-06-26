@@ -13,23 +13,18 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         Category::create([
-            'name' => 'Cafe',
-            'icon' => 'cafe.png'
+            'name' => 'SPBU Reguler',
+            'icon' => 'spbu_reguler.png'
         ]);
 
         Category::create([
-            'name' => 'Kantin',
-            'icon' => 'kantin.png'
+            'name' => 'SPBU COCO',
+            'icon' => 'spbu_coco.png'
         ]);
 
         Category::create([
-            'name' => 'ATM',
-            'icon' => 'atm.png'
-        ]);
-
-        Category::create([
-            'name' => 'Fotokopi',
-            'icon' => 'fotokopi.png'
+            'name' => 'Pertashop',
+            'icon' => 'pertashop.png'
         ]);
     }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'service/auth_store.dart';
 import 'pages/home_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthStore.init();
   runApp(const MyApp());
 }
 

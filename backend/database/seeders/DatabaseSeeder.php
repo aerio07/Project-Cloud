@@ -15,10 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
 {
-    $this->call([
-        CategorySeeder::class,
-        PlaceSeeder::class,
-        ReviewSeeder::class,
-    ]);
+        $this->call([
+            CategorySeeder::class,
+            PlaceSeeder::class,
+            ReviewSeeder::class,
+            FuelSeeder::class,
+            FacilitySeeder::class,
+        ]);
 }
 }

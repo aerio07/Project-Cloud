@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\WishlistController;
 
 // ==============================
 // BASIC API
@@ -19,6 +21,38 @@ Route::get('/places', [PlaceController::class, 'index']);
 Route::get('/places/{id}', [PlaceController::class, 'show']);
 
 Route::get('/reviews', [ReviewController::class, 'index']);
+
+Route::get('/fuels', function () {
+    return response()->json([
+        'success' => true,
+        'data' => \App\Models\Fuel::all()
+    ]);
+});
+
+
+// ==============================
+// AUTHENTICATION API
+// ==============================
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout']);
+
+
+// ==============================
+// WISHLIST API
+// ==============================
+
+Route::get('/wishlists', [WishlistController::class, 'index']);
+Route::post('/wishlists', [WishlistController::class, 'store']);
+Route::delete('/wishlists/{place_id}', [WishlistController::class, 'destroy']);
+
+
+// ==============================
+// PRIVATE REVIEWS API
+// ==============================
+
+Route::post('/reviews', [ReviewController::class, 'store']);
 
 
 // ==============================
