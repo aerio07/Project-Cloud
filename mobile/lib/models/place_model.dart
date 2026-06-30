@@ -51,20 +51,25 @@ class Fuel {
     required this.isAvailable,
   });
 
-  factory Fuel.fromJson(Map<String, dynamic> json) {
-    final pivot = json['pivot'] as Map<String, dynamic>?;
-    final pivotPrice = pivot?['price'];
-    final pivotAvailable = pivot?['is_available'];
+factory Fuel.fromJson(Map<String, dynamic> json) {
+  final pivot = json['pivot'] as Map<String, dynamic>?;
 
-    return Fuel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      octane: json['octane'] ?? '',
-      nationalPrice: _doubleParse(json['national_price']),
-      price: _doubleParse(pivotPrice ?? json['national_price']),
-      isAvailable: pivotAvailable == 1 || pivotAvailable == true || pivotAvailable == '1',
-    );
-  }
+  final price = pivot?['price'] ?? json['price'] ?? json['national_price'];
+
+  final available =
+      pivot?['is_available'] ?? json['is_available'] ?? false;
+
+  return Fuel(
+    id: json['id'] ?? 0,
+    name: json['name'] ?? '',
+    octane: json['octane'] ?? '',
+    nationalPrice: _doubleParse(json['national_price'] ?? json['price']),
+    price: _doubleParse(price),
+    isAvailable: available == true ||
+        available == 1 ||
+        available == '1',
+  );
+}
 }
 
 class Facility {

@@ -20,6 +20,12 @@ Route::get('/places', [PlaceController::class, 'index']);
 
 Route::get('/places/{id}', [PlaceController::class, 'show']);
 
+Route::post('/places',        [PlaceController::class, 'store']);
+Route::put('/places/{id}',    [PlaceController::class, 'update']);
+Route::patch('/places/{id}',  [PlaceController::class, 'update']);
+Route::delete('/places/{id}', [PlaceController::class, 'destroy']);
+Route::post('/places/import', [PlaceController::class, 'import']);
+
 Route::get('/reviews', [ReviewController::class, 'index']);
 
 Route::get('/fuels', function () {
