@@ -33,6 +33,8 @@ class WishlistStore {
         final List places = data['data'];
         final set = places.map<int>((e) => e['id'] as int).toSet();
         ids.value = set;
+      } else if (response.statusCode == 401) {
+        await AuthStore.clearSession();
       }
     } catch (_) {
       // Mengabaikan jika terjadi kegagalan koneksi jaringan
@@ -56,6 +58,11 @@ class WishlistStore {
       final data = jsonDecode(response.body);
       final List places = data['data'];
       return places.map((e) => Place.fromJson(e)).toList();
+    }
+
+    if (response.statusCode == 401) {
+      await AuthStore.clearSession();
+      return [];
     }
     
     throw Exception("Gagal memuat daftar wishlist");
@@ -85,6 +92,9 @@ class WishlistStore {
           next.remove(id);
           ids.value = next;
           return true;
+        } else if (response.statusCode == 401) {
+          await AuthStore.clearSession();
+          return false;
         }
       } else {
         // Tambah ke backend
@@ -101,6 +111,9 @@ class WishlistStore {
           next.add(id);
           ids.value = next;
           return true;
+        } else if (response.statusCode == 401) {
+          await AuthStore.clearSession();
+          return false;
         }
       }
     } catch (_) {

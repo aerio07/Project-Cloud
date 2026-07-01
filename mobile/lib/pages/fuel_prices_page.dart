@@ -42,8 +42,8 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
   }
 
   // Helper untuk menentukan detail deskripsi BBM berdasarkan nama
-  String _getFuelDetail(String name) {
-    switch (name.toLowerCase()) {
+  String _getFuelDetail(Fuel fuel) {
+    switch (fuel.name.toLowerCase()) {
       case 'pertalite':
         return 'Subsidi Pemerintah';
       case 'pertamax':
@@ -55,7 +55,7 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
       case 'pertamina dex':
         return 'CN 53 • Ultra Low Sulfur';
       default:
-        return 'BBM Pertamina';
+        return fuel.brand.isEmpty ? 'BBM' : 'BBM ${fuel.brand}';
     }
   }
 
@@ -117,6 +117,8 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
             final fuels = snapshot.data ?? [];
             final gasoline = fuels.where((f) => f.name.toLowerCase().contains('pertamax') || f.name.toLowerCase() == 'pertalite').toList();
             final diesel = fuels.where((f) => f.name.toLowerCase().contains('dex')).toList();
+            final shownFuelIds = {...gasoline.map((f) => f.id), ...diesel.map((f) => f.id)};
+            final others = fuels.where((f) => !shownFuelIds.contains(f.id)).toList();
 
             return RefreshIndicator(
               onRefresh: () async => _reload(),
@@ -135,6 +137,11 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
                     ...diesel.map((f) => _fuelCard(f)),
                     const SizedBox(height: 24),
                   ],
+                  if (others.isNotEmpty) ...[
+                    _section('Lainnya', const Color(0xFF6B7280)),
+                    ...others.map((f) => _fuelCard(f)),
+                    const SizedBox(height: 24),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
@@ -142,7 +149,7 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Text(
-                      '*Harga di atas merupakan harga nasional resmi Pertamina. Harga dapat berbeda di setiap wilayah dan SPBU.',
+                      '*Harga di atas merupakan harga acuan master data. Harga dapat berbeda di setiap wilayah dan SPBU.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF5F6368), fontStyle: FontStyle.italic, height: 1.4),
                     ),
@@ -201,7 +208,8 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
 
   Widget _fuelCard(Fuel fuel) {
     final color = _getFuelColor(fuel.name);
-    final detail = _getFuelDetail(fuel.name);
+    final detail = _getFuelDetail(fuel);
+    final title = fuel.brand.isEmpty ? fuel.name : '${fuel.brand} - ${fuel.name}';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -234,7 +242,7 @@ class _FuelPricesPageState extends State<FuelPricesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(fuel.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 3),
                     Text(detail, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
                   ],

@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+
+import '../service/api_config.dart';
 
 class NavigationPage extends StatefulWidget {
   final double latitude;
@@ -69,6 +70,7 @@ class _NavigationPageState extends State<NavigationPage> {
       _currentPosition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      _setBaseMarkers();
       await _getRoute();
     } catch (error) {
       _errorMessage = error.toString().replaceFirst('Exception: ', '');
@@ -90,22 +92,22 @@ class _NavigationPageState extends State<NavigationPage> {
 
   Future<void> _getRoute() async {
     if (_currentPosition == null) return;
+    _setBaseMarkers();
 
-    final baseUrl = kIsWeb ? 'http://127.0.0.1:8000' : 'http://10.0.2.2:8000';
     final uri = Uri.parse(
-      '$baseUrl/api/directions?start=${_currentPosition!.longitude},${_currentPosition!.latitude}'
+      '${ApiConfig.baseUrl}/directions?start=${_currentPosition!.longitude},${_currentPosition!.latitude}'
       '&end=${widget.longitude},${widget.latitude}&profile=$_profile',
     );
 
     try {
       final response = await http.get(uri);
-      if (response.statusCode != 200) {
-        throw Exception('Rute tidak dapat dimuat (${response.statusCode}).');
-      }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['message'] ?? 'Rute tidak dapat dimuat (${response.statusCode}).');
+      }
       final routes = data['routes'] as List?;
       if (routes == null || routes.isEmpty) {
-        throw Exception('Rute menuju lokasi ini tidak ditemukan.');
+        throw Exception(data['message'] ?? 'Rute menuju lokasi ini tidak ditemukan.');
       }
 
       final route = routes.first as Map<String, dynamic>;
@@ -128,14 +130,6 @@ class _NavigationPageState extends State<NavigationPage> {
               _nextInstruction)
           : _nextInstruction;
 
-      _markers
-        ..clear()
-        ..add(_currentLocationMarker(_currentPosition!))
-        ..add(Marker(
-          markerId: const MarkerId('destination'),
-          position: LatLng(widget.latitude, widget.longitude),
-          infoWindow: InfoWindow(title: widget.name),
-        ));
       _polylines
         ..clear()
         ..add(Polyline(
@@ -150,8 +144,24 @@ class _NavigationPageState extends State<NavigationPage> {
       if (mounted) setState(() => _errorMessage = null);
       _fitRoute(routePoints);
     } catch (error) {
+      _polylines.clear();
       if (mounted) setState(() => _errorMessage = error.toString().replaceFirst('Exception: ', ''));
+      _fitToMarkers();
     }
+  }
+
+  void _setBaseMarkers() {
+    final position = _currentPosition;
+    if (position == null) return;
+
+    _markers
+      ..clear()
+      ..add(_currentLocationMarker(position))
+      ..add(Marker(
+        markerId: const MarkerId('destination'),
+        position: LatLng(widget.latitude, widget.longitude),
+        infoWindow: InfoWindow(title: widget.name),
+      ));
   }
 
   Marker _currentLocationMarker(Position position) => Marker(
@@ -181,6 +191,17 @@ class _NavigationPageState extends State<NavigationPage> {
         80,
       ),
     );
+  }
+
+  Future<void> _fitToMarkers() async {
+    final position = _currentPosition;
+    if (_mapController == null || position == null || _isNavigating) return;
+
+    final points = [
+      LatLng(position.latitude, position.longitude),
+      LatLng(widget.latitude, widget.longitude),
+    ];
+    await _fitRoute(points);
   }
 
   Future<void> _startNavigation() async {
@@ -290,7 +311,11 @@ class _NavigationPageState extends State<NavigationPage> {
             polylines: _polylines,
             onMapCreated: (controller) {
               _mapController = controller;
-              if (_polylines.isNotEmpty) _fitRoute(_polylines.first.points);
+              if (_polylines.isNotEmpty) {
+                _fitRoute(_polylines.first.points);
+              } else {
+                _fitToMarkers();
+              }
             },
           ),
           SafeArea(
@@ -304,7 +329,12 @@ class _NavigationPageState extends State<NavigationPage> {
                     _roundButton(
                       Icons.my_location,
                       () => _fitRoute(
-                        _polylines.isEmpty ? [] : _polylines.first.points,
+                        _polylines.isEmpty
+                            ? [
+                                LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                                LatLng(widget.latitude, widget.longitude),
+                              ]
+                            : _polylines.first.points,
                       ),
                     ),
                 ],

@@ -15,8 +15,10 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users|alpha_dash',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
+            'date_of_birth' => 'required|date|before:today',
         ]);
 
         if ($validator->fails()) {
@@ -28,8 +30,10 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'date_of_birth' => $request->date_of_birth,
             'api_token' => Str::random(60),
         ]);
 
@@ -40,7 +44,10 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
+                'role' => $user->role,
+                'date_of_birth' => $user->date_of_birth?->toDateString(),
             ]
         ], 201);
     }
@@ -79,7 +86,10 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
+                'role' => $user->role,
+                'date_of_birth' => $user->date_of_birth?->toDateString(),
             ]
         ]);
     }

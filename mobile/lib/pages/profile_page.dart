@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../service/auth_service.dart';
 import '../service/auth_store.dart';
+import 'admin_dashboard_page.dart';
 import 'login_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -66,6 +67,16 @@ class _ProfilePageState extends State<ProfilePage> {
               if (loggedIn) ...[
                 _loyaltyCard(),
                 const SizedBox(height: 22),
+                if (AuthStore.isAdmin) ...[
+                  _menu(
+                    Icons.admin_panel_settings_rounded,
+                    'Panel Admin',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+                    ),
+                  ),
+                ],
                 _menu(Icons.person_outline_rounded, 'Edit Profil', onTap: () {}),
                 _menu(Icons.directions_car_outlined, 'Kendaraan Saya', onTap: () {}),
                 _menu(Icons.payments_outlined, 'Metode Pembayaran', onTap: () {}),

@@ -18,6 +18,7 @@ class FuelSeeder extends Seeder
         // ============================================================
         $pertalite = Fuel::create([
             'id' => 1,
+            'brand' => 'Pertamina',
             'name' => 'Pertalite',
             'octane' => '90',
             'national_price' => 10000.00,
@@ -25,6 +26,7 @@ class FuelSeeder extends Seeder
 
         $pertamax = Fuel::create([
             'id' => 2,
+            'brand' => 'Pertamina',
             'name' => 'Pertamax',
             'octane' => '92',
             'national_price' => 12950.00,
@@ -32,6 +34,7 @@ class FuelSeeder extends Seeder
 
         $turbo = Fuel::create([
             'id' => 3,
+            'brand' => 'Pertamina',
             'name' => 'Pertamax Turbo',
             'octane' => '98',
             'national_price' => 14400.00,
@@ -39,6 +42,7 @@ class FuelSeeder extends Seeder
 
         $dexlite = Fuel::create([
             'id' => 4,
+            'brand' => 'Pertamina',
             'name' => 'Dexlite',
             'octane' => 'D', // CN 51
             'national_price' => 14550.00,
@@ -46,6 +50,7 @@ class FuelSeeder extends Seeder
 
         $dex = Fuel::create([
             'id' => 5,
+            'brand' => 'Pertamina',
             'name' => 'Pertamina Dex',
             'octane' => 'D+', // CN 53
             'national_price' => 15100.00,

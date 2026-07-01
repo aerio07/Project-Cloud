@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ReviewSeeder::class,
             FuelSeeder::class,
             FacilitySeeder::class,
+            AdminSeeder::class,
         ]);
 }
 }

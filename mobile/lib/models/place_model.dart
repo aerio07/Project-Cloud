@@ -36,6 +36,7 @@ class Category {
 
 class Fuel {
   final int id;
+  final String brand;
   final String name;
   final String octane;
   final double nationalPrice;
@@ -44,6 +45,7 @@ class Fuel {
 
   Fuel({
     required this.id,
+    required this.brand,
     required this.name,
     required this.octane,
     required this.nationalPrice,
@@ -58,6 +60,7 @@ class Fuel {
 
     return Fuel(
       id: json['id'] ?? 0,
+      brand: json['brand'] ?? '',
       name: json['name'] ?? '',
       octane: json['octane'] ?? '',
       nationalPrice: _doubleParse(json['national_price']),

@@ -23,8 +23,9 @@ class AuthService {
           name: user['name'],
           email: user['email'],
           id: user['id'],
+          role: user['role'] ?? 'user',
         );
-        return {'success': true, 'message': data['message'] ?? 'Login berhasil'};
+        return {'success': true, 'message': data['message'] ?? 'Login berhasil', 'role': user['role'] ?? 'user'};
       }
 
       return {
@@ -37,12 +38,24 @@ class AuthService {
   }
 
   // Fungsi untuk Register
-  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+  static Future<Map<String, dynamic>> register({
+    required String name,
+    required String username,
+    required String email,
+    required String password,
+    required String dateOfBirth,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse("${ApiConfig.baseUrl}/register"),
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: jsonEncode({'name': name, 'email': email, 'password': password}),
+        body: jsonEncode({
+          'name': name,
+          'username': username,
+          'email': email,
+          'password': password,
+          'date_of_birth': dateOfBirth,
+        }),
       );
 
       final data = jsonDecode(response.body);
@@ -55,6 +68,7 @@ class AuthService {
           name: user['name'],
           email: user['email'],
           id: user['id'],
+          role: user['role'] ?? 'user',
         );
         return {'success': true, 'message': data['message'] ?? 'Registrasi berhasil'};
       }

@@ -407,7 +407,7 @@ class _DetailPageState extends State<DetailPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              fuel.name,
+                                              fuel.brand.isEmpty ? fuel.name : '${fuel.brand} - ${fuel.name}',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 15,
