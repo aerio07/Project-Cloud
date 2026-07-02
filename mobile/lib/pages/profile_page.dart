@@ -15,6 +15,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   // Fungsi logout
   Future<void> _handleLogout() async {
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -34,13 +35,13 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      await AuthService.logout();
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anda berhasil keluar.')),
-      );
-    }
+    if (confirmed != true) return;
+    await AuthService.logout();
+    if (!mounted) return;
+    setState(() {});
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Anda berhasil keluar.')),
+    );
   }
 
   @override

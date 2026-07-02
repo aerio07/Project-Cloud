@@ -264,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                           context,
                           MaterialPageRoute(builder: (_) => const RegisterPage()),
                         );
-                        if (registered == true && mounted) {
+                        if (registered == true && context.mounted) {
                           Navigator.pop(context, true);
                         }
                       },

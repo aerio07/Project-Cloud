@@ -127,5 +127,224 @@ class FuelSeeder extends Seeder
                 $place->fuels()->attach($fuelData);
             }
         }
+
+        // Place 5: SPBU Ahmad Yani (Reguler ramai, premium)
+$place5 = Place::find(5);
+if ($place5) {
+    $place5->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+    ]);
+}
+
+// Place 6: SPBU Margorejo
+$place6 = Place::find(6);
+if ($place6) {
+    $place6->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 7: SPBU COCO Wiyung
+$place7 = Place::find(7);
+if ($place7) {
+    $place7->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 8: SPBU Karang Pilang
+$place8 = Place::find(8);
+if ($place8) {
+    $place8->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 9: SPBU COCO Embong Malang
+$place9 = Place::find(9);
+if ($place9) {
+    $place9->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 10: SPBU Diponegoro
+$place10 = Place::find(10);
+if ($place10) {
+    $place10->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+    ]);
+}
+
+// Place 11: SPBU Demak
+$place11 = Place::find(11);
+if ($place11) {
+    $place11->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 12: SPBU COCO Tunjungan
+$place12 = Place::find(12);
+if ($place12) {
+    $place12->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 13: SPBU Mayjen Sungkono
+$place13 = Place::find(13);
+if ($place13) {
+    $place13->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+    ]);
+}
+
+// Place 14: SPBU COCO HR Muhammad
+$place14 = Place::find(14);
+if ($place14) {
+    $place14->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 15: SPBU Darmo Permai
+$place15 = Place::find(15);
+if ($place15) {
+    $place15->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 16: SPBU Tandes
+$place16 = Place::find(16);
+if ($place16) {
+    $place16->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 17: SPBU COCO Pakuwon Indah
+$place17 = Place::find(17);
+if ($place17) {
+    $place17->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 18: SPBU Kalianak
+$place18 = Place::find(18);
+if ($place18) {
+    $place18->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 19: SPBU Perak Barat
+$place19 = Place::find(19);
+if ($place19) {
+    $place19->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 20: Pertashop Bulak Setro
+$place20 = Place::find(20);
+if ($place20) {
+    $place20->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+    ]);
+}
+
+// Place 21: SPBU COCO Rungkut Industri
+$place21 = Place::find(21);
+if ($place21) {
+    $place21->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 22: SPBU Manyar Kertoarjo
+$place22 = Place::find(22);
+if ($place22) {
+    $place22->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $turbo->id => ['is_available' => true, 'price' => 14400.00],
+    ]);
+}
+
+// Place 23: SPBU Kertajaya Indah
+$place23 = Place::find(23);
+if ($place23) {
+    $place23->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
+
+// Place 24: SPBU Gunung Anyar
+$place24 = Place::find(24);
+if ($place24) {
+    $place24->fuels()->attach([
+        $pertalite->id => ['is_available' => true, 'price' => 10000.00],
+        $pertamax->id => ['is_available' => true, 'price' => 12950.00],
+        $dexlite->id => ['is_available' => true, 'price' => 14550.00],
+        $dex->id => ['is_available' => true, 'price' => 15100.00],
+    ]);
+}
     }
 }

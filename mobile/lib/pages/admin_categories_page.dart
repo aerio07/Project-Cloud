@@ -63,7 +63,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
     };
 
     final result = isEdit
-        ? await AdminService.updateCategory(category!['id'] as int, payload)
+        ? await AdminService.updateCategory(category['id'] as int, payload)
         : await AdminService.createCategory(payload);
 
     if (!mounted) return;

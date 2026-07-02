@@ -15,7 +15,13 @@ class Place extends Model
         'description',
         'rating',
         'photo_url',
-        'opening_hours'
+        'opening_hours',
+    ];
+
+    protected $casts = [
+        'latitude'  => 'float',
+        'longitude' => 'float',
+        'rating'    => 'float',
     ];
 
     public function category()
@@ -41,18 +47,18 @@ class Place extends Model
     }
 
     public function scopeWithFilters($query, $request)
-{
-    return $query
-        ->when($request->filled('fuel'), function ($query) use ($request) {
-            $query->whereHas('fuels', function ($query) use ($request) {
-                $query->where('name', $request->fuel)
-                    ->where('place_fuel.is_available', true);
+    {
+        return $query
+            ->when($request->filled('fuel'), function ($query) use ($request) {
+                $query->whereHas('fuels', function ($query) use ($request) {
+                    $query->where('name', $request->fuel)
+                        ->where('place_fuel.is_available', true);
+                });
+            })
+            ->when($request->filled('facility'), function ($query) use ($request) {
+                $query->whereHas('facilities', function ($query) use ($request) {
+                    $query->where('name', $request->facility);
+                });
             });
-        })
-        ->when($request->filled('facility'), function ($query) use ($request) {
-            $query->whereHas('facilities', function ($query) use ($request) {
-                $query->where('name', $request->facility);
-            });
-        });
-}
+    }
 }

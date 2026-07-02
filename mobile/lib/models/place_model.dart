@@ -27,7 +27,7 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'] ?? 0,
+      id: _intParse(json['id']),
       name: json['name'] ?? '',
       icon: json['icon'] ?? '',
     );
@@ -55,17 +55,17 @@ class Fuel {
 
   factory Fuel.fromJson(Map<String, dynamic> json) {
     final pivot = json['pivot'] as Map<String, dynamic>?;
-    final pivotPrice = pivot?['price'];
-    final pivotAvailable = pivot?['is_available'];
+    final price = pivot?['price'] ?? json['price'] ?? json['national_price'];
+    final available = pivot?['is_available'] ?? json['is_available'] ?? true;
 
     return Fuel(
-      id: json['id'] ?? 0,
+      id: _intParse(json['id']),
       brand: json['brand'] ?? '',
       name: json['name'] ?? '',
       octane: json['octane'] ?? '',
-      nationalPrice: _doubleParse(json['national_price']),
-      price: _doubleParse(pivotPrice ?? json['national_price']),
-      isAvailable: pivotAvailable == 1 || pivotAvailable == true || pivotAvailable == '1',
+      nationalPrice: _doubleParse(json['national_price'] ?? json['price']),
+      price: _doubleParse(price),
+      isAvailable: available == true || available == 1 || available == '1',
     );
   }
 }
@@ -83,7 +83,7 @@ class Facility {
 
   factory Facility.fromJson(Map<String, dynamic> json) {
     return Facility(
-      id: json['id'] ?? 0,
+      id: _intParse(json['id']),
       name: json['name'] ?? '',
       icon: json['icon'] ?? '',
     );
@@ -107,7 +107,7 @@ class Review {
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      id: json['id'] ?? 0,
+      id: _intParse(json['id']),
       userName: json['user_name'] ?? 'Anonim',
       rating: _intParse(json['rating']),
       comment: json['comment'] ?? '',
@@ -148,12 +148,12 @@ class Place {
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
-    var fuelsList = json['fuels'] as List?;
-    var facilitiesList = json['facilities'] as List?;
-    var reviewsList = json['reviews'] as List?;
+    final fuelsList = json['fuels'] is List ? json['fuels'] as List : null;
+    final facilitiesList = json['facilities'] is List ? json['facilities'] as List : null;
+    final reviewsList = json['reviews'] is List ? json['reviews'] as List : null;
 
     return Place(
-      id: json['id'] ?? 0,
+      id: _intParse(json['id']),
       name: json['name'] ?? '',
       address: json['address'] ?? '',
       latitude: _doubleParse(json['latitude']),

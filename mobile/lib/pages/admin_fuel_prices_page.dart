@@ -73,7 +73,7 @@ class _AdminFuelPricesPageState extends State<AdminFuelPricesPage> {
     };
 
     final result = isEdit
-        ? await AdminService.updateFuel(fuel!['id'] as int, payload)
+        ? await AdminService.updateFuel(fuel['id'] as int, payload)
         : await AdminService.createFuel(payload);
 
     if (!mounted) return;

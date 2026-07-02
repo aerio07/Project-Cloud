@@ -88,7 +88,7 @@ class _WishlistPageState extends State<WishlistPage> {
                       trailing: IconButton(
                         onPressed: () async {
                           final success = await WishlistStore.toggle(place.id);
-                          if (success && mounted) {
+                          if (success && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("Dihapus dari wishlist"),
@@ -126,9 +126,9 @@ class _EmptyWishlist extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.favorite_border_rounded, size: 64, color: Color(0xFFBA0015)),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text('Wishlist masih kosong', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Simpan SPBU favoritmu agar mudah ditemukan kembali.',
                 textAlign: TextAlign.center,
