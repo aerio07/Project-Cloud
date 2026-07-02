@@ -36,6 +36,17 @@ class PlaceResource extends JsonResource
                     'is_available' => (bool) $fuel->pivot->is_available,
                 ]);
             }),
+'reviews' => $this->whenLoaded('reviews', function () {
+    return $this->reviews->map(function ($review) {
+        return [
+            'id' => $review->id,
+            'user_name' => $review->user_name,
+            'rating' => $review->rating,
+            'comment' => $review->comment,
+            'created_at' => $review->created_at,
+        ];
+    });
+}),
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,
         ];
