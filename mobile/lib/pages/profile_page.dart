@@ -48,20 +48,33 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
-      appBar: AppBar(
-        title: const Text('Profil Saya'),
-        foregroundColor: const Color(0xFFBA0015),
-        backgroundColor: const Color(0xFFF8F9FC),
-        elevation: 0,
-      ),
+appBar: AppBar(
+  backgroundColor: Colors.white,
+  surfaceTintColor: Colors.white,
+  elevation: 0,
+  centerTitle: true,
+  toolbarHeight: 58,
+  scrolledUnderElevation: 0,
+  iconTheme: const IconThemeData(
+    color: Color(0xFFBA0015),
+  ),
+  title: const Text(
+    'Profil Saya',
+    style: TextStyle(
+      color: Color(0xFF202124),
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+),
       body: ValueListenableBuilder<bool>(
         valueListenable: AuthStore.isLoggedIn,
         builder: (context, loggedIn, _) {
           final name = AuthStore.userName.value ?? 'Tamu MySPBU';
           final email = AuthStore.userEmail.value ?? 'Silakan masuk untuk akses penuh';
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
+return ListView(
+  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
               _profileHeader(name, email, loggedIn),
               const SizedBox(height: 18),
