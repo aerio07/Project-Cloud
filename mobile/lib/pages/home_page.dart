@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/place_model.dart';
+import '../service/api_config.dart';
 import '../service/place_service.dart';
 import '../service/auth_store.dart';
 import 'detail_page.dart';
@@ -23,17 +26,39 @@ class _HomePageState extends State<HomePage> {
   String _query = '';
   Position? _userPosition;
   String _selectedFilter = 'Terdekat';
+  String? _selectedCategory;
+  List<Category> _categories = [];
 
   @override
   void initState() {
     super.initState();
     _futurePlaces = PlaceService.getPlaces();
     _loadUserLocation();
+    _loadCategories();
   }
 
   void _reload() => setState(() {
         _futurePlaces = PlaceService.getPlaces();
       });
+
+  Future<void> _loadCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/categories'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List list = data['data'];
+        if (mounted) {
+          setState(() {
+            _categories = list.map((e) => Category.fromJson(e)).toList();
+          });
+        }
+      }
+    } catch (_) {
+      // Kategori opsional, tidak perlu menampilkan error
+    }
+  }
 
   Future<void> _loadUserLocation() async {
     try {
@@ -78,8 +103,11 @@ class _HomePageState extends State<HomePage> {
             final places = snapshot.data ?? <Place>[];
             final filteredPlaces = places.where((place) {
               final keyword = _query.toLowerCase();
-              return place.name.toLowerCase().contains(keyword) ||
+              final matchesSearch = place.name.toLowerCase().contains(keyword) ||
                   place.address.toLowerCase().contains(keyword);
+              final matchesCategory = _selectedCategory == null ||
+                  (place.category != null && place.category!.name == _selectedCategory);
+              return matchesSearch && matchesCategory;
             }).toList();
             if (_selectedFilter == 'Terdekat' && _userPosition != null) {
               filteredPlaces.sort((a, b) => _distanceKm(a)!.compareTo(_distanceKm(b)!));
@@ -96,6 +124,7 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(child: _priceInfoCard(context)),
                   SliverToBoxAdapter(child: _searchField()),
                   SliverToBoxAdapter(child: _filterChips()),
+                  SliverToBoxAdapter(child: _categoryChips()),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
@@ -338,6 +367,67 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       );
+
+  Widget _categoryChips() {
+    if (_categories.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                selected: _selectedCategory == null,
+                label: const Text('Semua Kategori'),
+                avatar: const Icon(Icons.category_rounded, size: 17),
+                onSelected: (_) => setState(() => _selectedCategory = null),
+                selectedColor: const Color(0xFFFFE9E7),
+                checkmarkColor: const Color(0xFFBA0015),
+                labelStyle: TextStyle(
+                  color: _selectedCategory == null
+                      ? const Color(0xFFBA0015)
+                      : const Color(0xFF5F6368),
+                  fontWeight: FontWeight.w700,
+                ),
+                side: BorderSide(
+                  color: _selectedCategory == null
+                      ? const Color(0xFFBA0015)
+                      : const Color(0xFFE2E2E5),
+                ),
+              ),
+            ),
+            ..._categories.map((cat) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    selected: _selectedCategory == cat.name,
+                    label: Text(cat.name),
+                    onSelected: (_) => setState(() {
+                      _selectedCategory =
+                          _selectedCategory == cat.name ? null : cat.name;
+                    }),
+                    selectedColor: const Color(0xFFFFE9E7),
+                    checkmarkColor: const Color(0xFFBA0015),
+                    labelStyle: TextStyle(
+                      color: _selectedCategory == cat.name
+                          ? const Color(0xFFBA0015)
+                          : const Color(0xFF5F6368),
+                      fontWeight: FontWeight.w700,
+                    ),
+                    side: BorderSide(
+                      color: _selectedCategory == cat.name
+                          ? const Color(0xFFBA0015)
+                          : const Color(0xFFE2E2E5),
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _placeCard(Place place) => Material(
         color: Colors.white,
