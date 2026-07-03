@@ -9,6 +9,7 @@ import 'fuel_prices_page.dart';
 import 'profile_page.dart';
 import 'wishlist_page.dart';
 import 'login_page.dart';
+import 'map_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -182,6 +183,16 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MapPage()),
+              );
+            },
+            tooltip: 'Peta SPBU',
+            icon: const Icon(Icons.map_outlined),
           ),
           IconButton(
             onPressed: () => _navigateToWishlist(context),
