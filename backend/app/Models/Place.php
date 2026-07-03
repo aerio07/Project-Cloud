@@ -49,6 +49,11 @@ class Place extends Model
     public function scopeWithFilters($query, $request)
     {
         return $query
+            ->when($request->filled('category'), function ($query) use ($request) {
+                $query->whereHas('category', function ($query) use ($request) {
+                    $query->where('name', $request->category);
+                });
+            })
             ->when($request->filled('fuel'), function ($query) use ($request) {
                 $query->whereHas('fuels', function ($query) use ($request) {
                     $query->where('name', $request->fuel)
