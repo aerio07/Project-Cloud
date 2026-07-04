@@ -285,7 +285,7 @@ class _HomePageState extends State<HomePage> {
             tooltip: 'Profil',
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()))
-                  .then((_) => setState(() {}));
+                  .then((_) => _reload());
             },
           ),
         ]),
@@ -654,19 +654,34 @@ class _HomePageState extends State<HomePage> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFFF1F0), Color(0xFFFFE1DF)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(Icons.local_gas_station_rounded, color: _kPrimary, size: 26),
-                ),
+                place.photoUrl.isNotEmpty
+                    ? Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: _kBorder),
+                          image: DecorationImage(
+                            image: NetworkImage(place.photoUrl.startsWith('http')
+                                ? place.photoUrl
+                                : '${ApiConfig.baseUrl}${place.photoUrl}'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFFFFF1F0), Color(0xFFFFE1DF)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.local_gas_station_rounded, color: _kPrimary, size: 26),
+                      ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

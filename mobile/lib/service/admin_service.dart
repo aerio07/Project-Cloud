@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'api_config.dart';
@@ -42,7 +42,7 @@ class AdminService {
 
   static Future<Map<String, dynamic>> createPlace({
     required Map<String, dynamic> data,
-    File? photo,
+    List<XFile>? photos,
   }) async {
     final request = http.MultipartRequest(
       'POST',
@@ -80,14 +80,18 @@ class AdminService {
       }
     }
 
-    // Tambahkan foto
-    if (photo != null) {
-      final ext = photo.path.split('.').last.toLowerCase();
-      request.files.add(await http.MultipartFile.fromPath(
-        'photo',
-        photo.path,
-        contentType: MediaType('image', ext == 'jpg' ? 'jpeg' : ext),
-      ));
+    // Tambahkan foto-foto
+    if (photos != null && photos.isNotEmpty) {
+      for (final photo in photos) {
+        final ext = photo.name.split('.').last.toLowerCase();
+        final bytes = await photo.readAsBytes();
+        request.files.add(http.MultipartFile.fromBytes(
+          'photos[]',
+          bytes,
+          filename: photo.name,
+          contentType: MediaType('image', ext == 'jpg' ? 'jpeg' : ext),
+        ));
+      }
     }
 
     final streamed = await request.send();
@@ -98,7 +102,7 @@ class AdminService {
   static Future<Map<String, dynamic>> updatePlace({
     required int id,
     required Map<String, dynamic> data,
-    File? photo,
+    List<XFile>? photos,
   }) async {
     final request = http.MultipartRequest(
       'POST', // POST karena multipart tidak support PUT
@@ -133,13 +137,18 @@ class AdminService {
       }
     }
 
-    if (photo != null) {
-      final ext = photo.path.split('.').last.toLowerCase();
-      request.files.add(await http.MultipartFile.fromPath(
-        'photo',
-        photo.path,
-        contentType: MediaType('image', ext == 'jpg' ? 'jpeg' : ext),
-      ));
+    // Tambahkan foto-foto
+    if (photos != null && photos.isNotEmpty) {
+      for (final photo in photos) {
+        final ext = photo.name.split('.').last.toLowerCase();
+        final bytes = await photo.readAsBytes();
+        request.files.add(http.MultipartFile.fromBytes(
+          'photos[]',
+          bytes,
+          filename: photo.name,
+          contentType: MediaType('image', ext == 'jpg' ? 'jpeg' : ext),
+        ));
+      }
     }
 
     final streamed = await request.send();

@@ -47,15 +47,40 @@ class AdminController extends Controller
     {
         if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
 
+        // Optimized single query to fetch all counts in one roundtrip to Supabase
+        $stats = \Illuminate\Support\Facades\DB::select("
+            SELECT 
+                (SELECT COUNT(*) FROM places) as total_places,
+                (SELECT COUNT(*) FROM users WHERE role = 'user') as total_users,
+                (SELECT COUNT(*) FROM reviews) as total_reviews,
+                (SELECT COUNT(*) FROM fuels) as total_fuels,
+                (SELECT COUNT(*) FROM categories) as total_categories,
+                (SELECT COUNT(*) FROM facilities) as total_facilities
+        ")[0];
+
         return response()->json([
             'success' => true,
             'data' => [
-                'total_places' => Place::count(),
-                'total_users' => User::where('role', 'user')->count(),
-                'total_reviews' => Review::count(),
-                'total_fuels' => Fuel::count(),
-                'total_categories' => Category::count(),
-                'total_facilities' => Facility::count(),
+                'total_places' => (int)$stats->total_places,
+                'total_users' => (int)$stats->total_users,
+                'total_reviews' => (int)$stats->total_reviews,
+                'total_fuels' => (int)$stats->total_fuels,
+                'total_categories' => (int)$stats->total_categories,
+                'total_facilities' => (int)$stats->total_facilities,
+            ]
+        ]);
+    }
+
+    public function formOptions(Request $request)
+    {
+        if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'categories' => Category::orderBy('name')->get(),
+                'facilities' => Facility::orderBy('name')->get(),
+                'fuels' => Fuel::orderBy('name')->get(),
             ]
         ]);
     }
@@ -68,7 +93,7 @@ class AdminController extends Controller
     {
         if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
 
-        $places = Place::with(['category', 'fuels', 'facilities'])->orderBy('name')->get();
+        $places = Place::with(['category', 'fuels', 'facilities', 'images'])->orderBy('name')->get();
 
         return response()->json([
             'success' => true,
@@ -89,6 +114,8 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'opening_hours' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'sync_facilities' => 'nullable|boolean',
             'facilities' => 'nullable|array',
             'facilities.*' => 'exists:facilities,id',
@@ -108,13 +135,27 @@ class AdminController extends Controller
 
         $data = $request->only(['name', 'address', 'latitude', 'longitude', 'category_id', 'description', 'opening_hours']);
 
-        // Upload gambar
-        if ($request->hasFile('photo')) {
+        $uploadedPhotoUrls = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $path = $photoFile->store('places', 'public');
+                $uploadedPhotoUrls[] = '/storage/' . $path;
+            }
+            if (!empty($uploadedPhotoUrls)) {
+                $data['photo_url'] = $uploadedPhotoUrls[0];
+            }
+        } elseif ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('places', 'public');
-            $data['photo_url'] = '/storage/' . $path;
+            $photoUrl = '/storage/' . $path;
+            $data['photo_url'] = $photoUrl;
+            $uploadedPhotoUrls[] = $photoUrl;
         }
 
         $place = Place::create($data);
+
+        foreach ($uploadedPhotoUrls as $photoUrl) {
+            $place->images()->create(['photo_url' => $photoUrl]);
+        }
 
         // Attach fasilitas
         if ($request->boolean('sync_facilities') || $request->has('facilities')) {
@@ -136,7 +177,7 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'SPBU berhasil ditambahkan.',
-            'data' => $place->load(['category', 'fuels', 'facilities']),
+            'data' => $place->load(['category', 'fuels', 'facilities', 'images']),
         ], 201);
     }
 
@@ -144,7 +185,7 @@ class AdminController extends Controller
     {
         if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
 
-        $place = Place::find($id);
+        $place = Place::with('images')->find($id);
         if (!$place) {
             return response()->json(['success' => false, 'message' => 'SPBU tidak ditemukan.'], 404);
         }
@@ -158,6 +199,8 @@ class AdminController extends Controller
             'description' => 'nullable|string',
             'opening_hours' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
             'sync_facilities' => 'nullable|boolean',
             'facilities' => 'nullable|array',
             'facilities.*' => 'exists:facilities,id',
@@ -178,17 +221,46 @@ class AdminController extends Controller
         $data = $request->only(['name', 'address', 'latitude', 'longitude', 'category_id', 'description', 'opening_hours']);
 
         // Upload gambar baru (hapus lama jika ada)
-        if ($request->hasFile('photo')) {
-            // Hapus gambar lama
+        $uploadedPhotoUrls = [];
+        $hasNewPhotos = $request->hasFile('photos') || $request->hasFile('photo');
+
+        if ($hasNewPhotos) {
+            // Hapus gambar-gambar lama dari storage
+            foreach ($place->images as $img) {
+                $oldPath = str_replace('/storage/', '', $img->photo_url);
+                Storage::disk('public')->delete($oldPath);
+            }
             if ($place->photo_url) {
                 $oldPath = str_replace('/storage/', '', $place->photo_url);
                 Storage::disk('public')->delete($oldPath);
             }
-            $path = $request->file('photo')->store('places', 'public');
-            $data['photo_url'] = '/storage/' . $path;
+
+            // Hapus record gambar lama
+            $place->images()->delete();
+
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $photoFile) {
+                    $path = $photoFile->store('places', 'public');
+                    $uploadedPhotoUrls[] = '/storage/' . $path;
+                }
+                if (!empty($uploadedPhotoUrls)) {
+                    $data['photo_url'] = $uploadedPhotoUrls[0];
+                }
+            } elseif ($request->hasFile('photo')) {
+                $path = $request->file('photo')->store('places', 'public');
+                $photoUrl = '/storage/' . $path;
+                $data['photo_url'] = $photoUrl;
+                $uploadedPhotoUrls[] = $photoUrl;
+            }
         }
 
         $place->update($data);
+
+        if ($hasNewPhotos) {
+            foreach ($uploadedPhotoUrls as $photoUrl) {
+                $place->images()->create(['photo_url' => $photoUrl]);
+            }
+        }
 
         // Update fasilitas
         if ($request->boolean('sync_facilities') || $request->has('facilities')) {
@@ -210,7 +282,7 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'SPBU berhasil diperbarui.',
-            'data' => $place->load(['category', 'fuels', 'facilities']),
+            'data' => $place->load(['category', 'fuels', 'facilities', 'images']),
         ]);
     }
 
@@ -218,17 +290,22 @@ class AdminController extends Controller
     {
         if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
 
-        $place = Place::find($id);
+        $place = Place::with('images')->find($id);
         if (!$place) {
             return response()->json(['success' => false, 'message' => 'SPBU tidak ditemukan.'], 404);
         }
 
-        // Hapus gambar
+        // Hapus file-file gambar lama dari storage
+        foreach ($place->images as $img) {
+            $oldPath = str_replace('/storage/', '', $img->photo_url);
+            Storage::disk('public')->delete($oldPath);
+        }
         if ($place->photo_url) {
             $oldPath = str_replace('/storage/', '', $place->photo_url);
             Storage::disk('public')->delete($oldPath);
         }
 
+        $place->images()->delete();
         $place->delete();
 
         return response()->json([
@@ -428,5 +505,74 @@ class AdminController extends Controller
             'message' => 'Fasilitas berhasil diperbarui.',
             'data' => $facility,
         ]);
+    }
+
+    public function destroyCategory(Request $request, $id)
+    {
+        if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
+
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['success' => false, 'message' => 'Kategori tidak ditemukan.'], 404);
+        }
+
+        try {
+            $category->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil dihapus.',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kategori tidak dapat dihapus karena masih digunakan oleh beberapa SPBU.',
+            ], 400);
+        }
+    }
+
+    public function destroyFacility(Request $request, $id)
+    {
+        if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
+
+        $facility = Facility::find($id);
+        if (!$facility) {
+            return response()->json(['success' => false, 'message' => 'Fasilitas tidak ditemukan.'], 404);
+        }
+
+        try {
+            $facility->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Fasilitas berhasil dihapus.',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fasilitas tidak dapat dihapus karena masih digunakan.',
+            ], 400);
+        }
+    }
+
+    public function destroyFuel(Request $request, $id)
+    {
+        if (!$this->getAdminUser($request)) return $this->unauthorizedResponse();
+
+        $fuel = Fuel::find($id);
+        if (!$fuel) {
+            return response()->json(['success' => false, 'message' => 'Jenis BBM tidak ditemukan.'], 404);
+        }
+
+        try {
+            $fuel->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Jenis BBM berhasil dihapus.',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jenis BBM tidak dapat dihapus karena masih digunakan.',
+            ], 400);
+        }
     }
 }

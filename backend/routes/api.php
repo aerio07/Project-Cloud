@@ -70,6 +70,7 @@ Route::prefix('admin')->middleware('admin.token')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard']);
 
     // SPBU
+    Route::get('/places/form-options', [AdminController::class, 'formOptions']);
     Route::get('/places', [AdminController::class, 'indexPlaces']);
     Route::post('/places', [AdminController::class, 'storePlace']);
     Route::post('/places/{id}', [AdminController::class, 'updatePlace']);
@@ -79,16 +80,19 @@ Route::prefix('admin')->middleware('admin.token')->group(function () {
     Route::get('/fuels', [AdminController::class, 'indexFuels']);
     Route::post('/fuels', [AdminController::class, 'storeFuel']);
     Route::put('/fuels/{id}', [AdminController::class, 'updateFuel']);
+    Route::delete('/fuels/{id}', [AdminController::class, 'destroyFuel']);
 
     // Kategori
     Route::get('/categories', [AdminController::class, 'indexCategories']);
     Route::post('/categories', [AdminController::class, 'storeCategory']);
     Route::put('/categories/{id}', [AdminController::class, 'updateCategory']);
+    Route::delete('/categories/{id}', [AdminController::class, 'destroyCategory']);
 
     // Fasilitas
     Route::get('/facilities', [AdminController::class, 'indexFacilities']);
     Route::post('/facilities', [AdminController::class, 'storeFacility']);
     Route::put('/facilities/{id}', [AdminController::class, 'updateFacility']);
+    Route::delete('/facilities/{id}', [AdminController::class, 'destroyFacility']);
 });
 
 
@@ -170,4 +174,21 @@ Route::get('/directions', function (Request $request) {
             'message' => $message,
         ], 500);
     }
+});
+
+// ==============================
+// STORAGE API FOR CORS COMPATIBILITY (WEB DEVELOPMENT)
+// ==============================
+Route::get('/storage/places/{filename}', function ($filename) {
+    $path = storage_path('app/public/places/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    $file = file_get_contents($path);
+    $type = mime_content_type($path);
+    return response($file, 200)
+        ->header("Content-Type", $type)
+        ->header("Access-Control-Allow-Origin", "*")
+        ->header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Request-With")
+        ->header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 });

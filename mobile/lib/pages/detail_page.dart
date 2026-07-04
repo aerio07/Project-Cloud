@@ -37,6 +37,7 @@ class _DetailPageState extends State<DetailPage> {
   int _selectedRating = 5;
   final _commentController = TextEditingController();
   bool _isSubmittingReview = false;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -322,67 +323,122 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                     flexibleSpace: FlexibleSpaceBar(
-                      background: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [_kPrimary, _kPrimaryDark],
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: -32,
-                              top: 20,
-                              child: Icon(
-                                Icons.local_gas_station_rounded,
-                                size: 230,
-                                color: Colors.white.withValues(alpha: 0.10),
+                      background: (() {
+                        final displayImages = place.images.isNotEmpty
+                            ? place.images
+                            : (place.photoUrl.isNotEmpty ? [place.photoUrl] : <String>[]);
+                        if (displayImages.isNotEmpty) {
+                          return Stack(
+                            children: [
+                              PageView.builder(
+                                onPageChanged: (index) {
+                                  setState(() {
+                                    _currentImageIndex = index;
+                                  });
+                                },
+                                itemCount: displayImages.length,
+                                itemBuilder: (context, index) {
+                                  final imgUrl = displayImages[index];
+                                  final fullUrl = imgUrl.startsWith('http') ? imgUrl : '${ApiConfig.baseUrl}$imgUrl';
+                                  return Image.network(
+                                    fullUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                            Positioned(
-                              left: -30,
-                              bottom: -30,
-                              child: Container(
-                                width: 140,
-                                height: 140,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.05),
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.15),
+                                        Colors.black.withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              left: 22,
-                              right: 22,
-                              bottom: 30,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: _kGreen,
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              width: 6,
-                                              height: 6,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
+                              if (displayImages.length > 1)
+                                Positioned(
+                                  right: 22,
+                                  top: 100,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_currentImageIndex + 1} / ${displayImages.length}',
+                                      style: const TextStyle(
+                                        fontFamily: _kFont,
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              Positioned(
+                                left: 22,
+                                right: 22,
+                                bottom: 30,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: _kGreen,
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                place.openingHours,
+                                                style: const TextStyle(
+                                                  fontFamily: _kFont,
+                                                  color: Colors.white,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        if (place.category != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(999),
+                                              border: Border.all(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.35)),
                                             ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              place.openingHours,
+                                            child: Text(
+                                              place.category!.name,
                                               style: const TextStyle(
                                                 fontFamily: _kFont,
                                                 color: Colors.white,
@@ -390,78 +446,187 @@ class _DetailPageState extends State<DetailPage> {
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      place.name,
+                                      style: const TextStyle(
+                                        fontFamily: _kFont,
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.6,
+                                        height: 1.2,
                                       ),
-                                      const SizedBox(width: 8),
-                                      if (place.category != null)
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(Icons.location_on_rounded,
+                                            size: 15,
+                                            color:
+                                                Colors.white.withValues(alpha: 0.85)),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            place.address,
+                                            style: TextStyle(
+                                              fontFamily: _kFont,
+                                              color:
+                                                  Colors.white.withValues(alpha: 0.9),
+                                              fontSize: 12.5,
+                                              height: 1.4,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Stack(
+                            children: [
+                              Positioned(
+                                right: -32,
+                                top: 20,
+                                child: Icon(
+                                  Icons.local_gas_station_rounded,
+                                  size: 230,
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                ),
+                              ),
+                              Positioned(
+                                left: -30,
+                                bottom: -30,
+                                child: Container(
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: 22,
+                                right: 22,
+                                bottom: 30,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.2),
+                                            color: _kGreen,
                                             borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(
-                                                color: Colors.white
-                                                    .withValues(alpha: 0.35)),
                                           ),
-                                          child: Text(
-                                            place.category!.name,
-                                            style: const TextStyle(
-                                              fontFamily: _kFont,
-                                              color: Colors.white,
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.w700,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                place.openingHours,
+                                                style: const TextStyle(
+                                                  fontFamily: _kFont,
+                                                  color: Colors.white,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        if (place.category != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(999),
+                                              border: Border.all(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.35)),
+                                            ),
+                                            child: Text(
+                                              place.category!.name,
+                                              style: const TextStyle(
+                                                fontFamily: _kFont,
+                                                color: Colors.white,
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    place.name,
-                                    style: const TextStyle(
-                                      fontFamily: _kFont,
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.6,
-                                      height: 1.2,
+                                      ],
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Icon(Icons.location_on_rounded,
-                                          size: 15,
-                                          color:
-                                              Colors.white.withValues(alpha: 0.85)),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          place.address,
-                                          style: TextStyle(
-                                            fontFamily: _kFont,
-                                            color:
-                                                Colors.white.withValues(alpha: 0.9),
-                                            fontSize: 12.5,
-                                            height: 1.4,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      place.name,
+                                      style: const TextStyle(
+                                        fontFamily: _kFont,
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.6,
+                                        height: 1.2,
                                       ),
-                                    ],
-                                  ),
-                                ],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(Icons.location_on_rounded,
+                                            size: 15,
+                                            color:
+                                                Colors.white.withValues(alpha: 0.85)),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            place.address,
+                                            style: TextStyle(
+                                              fontFamily: _kFont,
+                                              color:
+                                                  Colors.white.withValues(alpha: 0.9),
+                                              fontSize: 12.5,
+                                              height: 1.4,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
+                            ],
+                          );
+                        }
+                      })(),
                     ),
                     actions: [
                       Padding(

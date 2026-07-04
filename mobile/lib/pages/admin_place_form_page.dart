@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../service/admin_service.dart';
+import '../service/api_config.dart';
 import 'admin_location_picker_page.dart';
 
 class AdminPlaceFormPage extends StatefulWidget {
@@ -32,6 +36,10 @@ class _AdminPlaceFormPageState extends State<AdminPlaceFormPage> {
   int? _categoryId;
   bool _loading = true;
   bool _saving = false;
+  
+  final ImagePicker _picker = ImagePicker();
+  final List<XFile> _selectedPhotos = [];
+  List<String> _existingPhotoUrls = [];
 
   bool get _isEdit => widget.place != null;
 
@@ -87,6 +95,18 @@ class _AdminPlaceFormPageState extends State<AdminPlaceFormPage> {
         text: (pivot?['price'] ?? item['national_price'] ?? '').toString(),
       );
     }
+
+    final List images = place['images'] ?? [];
+    if (images.isNotEmpty) {
+      _existingPhotoUrls = images.map<String>((e) {
+        if (e is Map) {
+          return e['photo_url']?.toString() ?? '';
+        }
+        return e.toString();
+      }).where((url) => url.isNotEmpty).toList();
+    } else if (place['photo_url'] != null) {
+      _existingPhotoUrls = [place['photo_url'].toString()];
+    }
   }
 
   Future<void> _loadOptions() async {
@@ -140,6 +160,22 @@ class _AdminPlaceFormPageState extends State<AdminPlaceFormPage> {
     });
   }
 
+  Future<void> _pickPhotos() async {
+    try {
+      final List<XFile> pickedFiles = await _picker.pickMultiImage();
+      if (pickedFiles.isNotEmpty) {
+        setState(() {
+          _selectedPhotos.addAll(pickedFiles);
+          _existingPhotoUrls = [];
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memilih foto: $e')),
+      );
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _categoryId == null) return;
 
@@ -167,8 +203,8 @@ class _AdminPlaceFormPageState extends State<AdminPlaceFormPage> {
     };
 
     final result = _isEdit
-        ? await AdminService.updatePlace(id: widget.place!['id'] as int, data: data)
-        : await AdminService.createPlace(data: data);
+        ? await AdminService.updatePlace(id: widget.place!['id'] as int, data: data, photos: _selectedPhotos)
+        : await AdminService.createPlace(data: data, photos: _selectedPhotos);
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -277,6 +313,118 @@ class _AdminPlaceFormPageState extends State<AdminPlaceFormPage> {
                     onPressed: _pickLocation,
                     icon: const Icon(Icons.map_rounded),
                     label: const Text('Pilih dari Google Maps'),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text('Foto SPBU', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  if (_existingPhotoUrls.isNotEmpty)
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _existingPhotoUrls.length,
+                        itemBuilder: (context, index) {
+                          final url = _existingPhotoUrls[index];
+                          final fullUrl = url.startsWith('http') ? url : '${ApiConfig.baseUrl}$url';
+                          return Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E2E5)),
+                              image: DecorationImage(
+                                image: NetworkImage(fullUrl),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else if (_selectedPhotos.isNotEmpty)
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _selectedPhotos.length,
+                        itemBuilder: (context, index) {
+                          final file = _selectedPhotos[index];
+                          return Stack(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFE2E2E5)),
+                                  image: DecorationImage(
+                                    image: (kIsWeb
+                                        ? NetworkImage(file.path)
+                                        : FileImage(File(file.path))) as ImageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 12,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedPhotos.removeAt(index);
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E2E5), style: BorderStyle.solid),
+                      ),
+                      child: const Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.photo_library_outlined, color: Color(0xFFBA0015), size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Belum ada foto terpilih',
+                              style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _pickPhotos,
+                    icon: const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFFBA0015)),
+                    label: const Text('Pilih Foto (Bisa banyak)', style: TextStyle(color: Color(0xFFBA0015))),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFBA0015)),
+                    ),
                   ),
                   const SizedBox(height: 22),
                   const Text('Fasilitas', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),

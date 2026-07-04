@@ -19,7 +19,7 @@ class PlaceController extends Controller
      */
     public function index(Request $request)
     {
-        $places = Place::with(['category', 'fuels', 'facilities'])
+        $places = Place::with(['category', 'fuels', 'facilities', 'images'])
             ->withFilters($request)
             ->get();
 
@@ -39,6 +39,7 @@ class PlaceController extends Controller
             'reviews',
             'fuels',
             'facilities',
+            'images',
         ])->find($id);
 
         if (!$place) {

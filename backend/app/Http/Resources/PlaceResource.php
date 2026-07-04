@@ -18,6 +18,7 @@ class PlaceResource extends JsonResource
             'description'   => $this->description,
             'rating'        => (float) $this->rating,
             'photo_url'     => $this->photo_url,
+            'images'        => $this->relationLoaded('images') ? $this->images->map(fn($img) => $img->photo_url) : [],
             'opening_hours' => $this->opening_hours,
             'category'      => $this->whenLoaded('category'),
             'facilities'    => $this->whenLoaded('facilities', function () {

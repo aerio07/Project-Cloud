@@ -125,6 +125,7 @@ class Place {
   final String description;
   final double rating;
   final String photoUrl;
+  final List<String> images;
   final String openingHours;
   final Category? category;
   final List<Fuel> fuels;
@@ -140,6 +141,7 @@ class Place {
     required this.description,
     required this.rating,
     required this.photoUrl,
+    required this.images,
     required this.openingHours,
     this.category,
     required this.fuels,
@@ -151,6 +153,14 @@ class Place {
     final fuelsList = json['fuels'] is List ? json['fuels'] as List : null;
     final facilitiesList = json['facilities'] is List ? json['facilities'] as List : null;
     final reviewsList = json['reviews'] is List ? json['reviews'] as List : null;
+    final imagesList = json['images'] is List
+        ? (json['images'] as List).map((e) {
+            if (e is Map) {
+              return e['photo_url']?.toString() ?? '';
+            }
+            return e.toString();
+          }).where((url) => url.isNotEmpty).toList()
+        : <String>[];
 
     return Place(
       id: _intParse(json['id']),
@@ -161,6 +171,7 @@ class Place {
       description: json['description'] ?? '',
       rating: _doubleParse(json['rating']),
       photoUrl: json['photo_url'] ?? '',
+      images: imagesList,
       openingHours: json['opening_hours'] ?? '24 Jam',
       category: json['category'] != null ? Category.fromJson(json['category']) : null,
       fuels: fuelsList != null ? fuelsList.map((e) => Fuel.fromJson(e)).toList() : [],

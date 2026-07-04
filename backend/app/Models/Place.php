@@ -46,6 +46,11 @@ class Place extends Model
         return $this->belongsToMany(Facility::class, 'facility_place');
     }
 
+    public function images()
+    {
+        return $this->hasMany(PlaceImage::class);
+    }
+
     public function scopeWithFilters($query, $request)
     {
         return $query
