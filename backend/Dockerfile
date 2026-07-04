@@ -33,8 +33,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Jalankan instalasi dependensi Laravel via Composer
 RUN composer install --no-dev --optimize-autoloader
 
+# Buat symbolic link storage public -> storage/app/public
+RUN php artisan storage:link
+
 # Atur kepemilikan permission untuk folder storage dan bootstrap cache agar Apache bisa menulis
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/storage
 
 # Port default
 EXPOSE 80
